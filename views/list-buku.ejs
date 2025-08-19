@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+    />
+  </head>
+  <body>
+    <div class="container mt-5">
+      <h1 class="text-center">List Buku</h1>
+
+      <!-- Form to Add New Buku -->
+      <form id="addBukuForm" class="my-4">
+        <div class="input-group">
+          <input
+            type="text"
+            id="Judul"
+            class="form-control"
+            placeholder="Tambahkan Judul"
+            required
+          />
+          <input
+            type="text"
+            id="Penulis"
+            class="form-control"
+            placeholder="Tambahkan Penulis"
+            required
+          />
+          <input
+            type="number"
+            id="Tahun"
+            class="form-control"
+            placeholder="Tambahkan Tahun"
+            required
+          />
+          <div class="input-group-append">
+            <button type="submit" class="btn btn-primary">Add Buku</button>
+          </div>
+        </div>
+      </form>
+
+      <!-- List of Buku -->
+      <ul id="bukuList" class="list-group">
+        <% buku.forEach(buku => { %>
+        <li
+          class="list-group-item d-flex justify-content-between align-items-center"
+        >
+          <span class="ml-2">
+            <%= buku.judul %>
+          </span>
+          <span class="ml-2">
+            <%= buku.penulis %>
+          </span>
+          <span class="ml-2">
+            <%= buku.tahun %>
+          </span>
+          <div>
+            <button
+              class="btn btn-sm btn-success mr-2 editBtn"
+              data-id="<%= buku.id %>"
+            >
+              Edit
+            </button>
+            <button
+              class="btn btn-sm btn-danger deleteBtn"
+              data-id="<%= buku.id %>"
+            >
+              Delete
+            </button>
+          </div>
+        </li>
+        <% }); %>
+      </ul>
+
+      <!-- Edit Buku Modal -->
+      <div
+        id="editModal"
+        class="modal fade"
+        tabindex="-1"
+        role="dialog"
+        aria-labelledby="editModalLabel"
+        aria-hidden="true"
+      >
+        <div class="modal-dialog" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="editModalLabel">Edit buku</h5>
+              <button
+                type="button"
+                class="close"
+                data-dismiss="modal"
+                aria-label="Close"
+              >
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body">
+              <form id="editTodoForm">
+                <div class="form-group">
+                  <label for="editTask">buku</label>
+                  <input
+                    type="text"
+                    id="editJudul"
+                    class="form-control"
+                    required
+                  />
+                  <input
+                    type="text"
+                    id="editPenulis"
+                    class="form-control"
+                    placeholder="Edit Penulis"
+                    required
+                  />
+                  <input
+                    type="number"
+                    id="editTahun"
+                    class="form-control"
+                    placeholder="Edit Tahun"
+                    required
+                  />
+                </div>
+                <button type="submit" class="btn btn-primary mt-3">
+                  Save Changes
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Bootstrap 4 JS + Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script>
+      $(document).ready(function () {
+        let editId;
+
+        // Add new buku
+        $("#addBukuForm").on("submit", function (e) {
+          e.preventDefault();
+          const judul = $("#Judul").val().trim();
+          const penulis = $("#Penulis").val().trim();
+          const tahun = $("#Tahun").val().trim();
+          if (judul && penulis && tahun) {
+            $.ajax({
+              url: "/buku",
+              type: "POST",
+              contentType: "application/json",
+              data: JSON.stringify({ judul: judul, penulis: penulis, tahun: tahun }),
+              success: function () {
+                location.reload();
+              },
+              error: function (error) {
+                console.error("Error adding buku:", error.responseText);
+              },
+            });
+          }
+        });
+        // Delete a buku
+        $(".deleteBtn").on("click", function () {
+          const id = $(this).data("id");
+          $.ajax({
+            url: "/buku/" + id,
+            type: "DELETE",
+            success: function () {
+              location.reload();
+            },
+          });
+        });
+
+        // Show edit modal
+        $(".editBtn").on("click", function () {
+          editId = $(this).data("id");
+          const currentJudul = $(this).closest("li").find(".judul").text();
+          const currentPenulis = $(this).closest("li").find(".penulis").text();
+          const currentTahun = $(this).closest("li").find(".tahun").text();
+          $("#editJudul").val(currentJudul);
+          $("#editPenulis").val(currentPenulis);
+          $("#editTahun").val(currentTahun);
+          $("#editModal").modal("show");
+        });
+
+        // Update buku
+        $("#editTodoForm").on("submit", function (e) {
+          e.preventDefault();
+          const judul = $("#editJudul").val();
+          const penulis = $("#editPenulis").val();
+          const tahun = $("#editTahun").val();
+          if (judul && penulis && tahun) {
+            $.ajax({
+              url: "/buku/" + editId,
+              type: "PUT",
+              data: JSON.stringify({ judul: judul, penulis: penulis, tahun: tahun }),
+              contentType: "application/json",
+              success: function () {
+                location.reload();
+              },
+            });
+          }
+        });
+      });
+    </script>
+  </body>
+</html>
